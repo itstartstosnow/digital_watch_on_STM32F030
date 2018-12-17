@@ -2,6 +2,7 @@
 # include "delay.h"
 # include "key.h"
 # include "ledDigit.h"
+# include "timer.h"
 	
 
 int main()
@@ -15,16 +16,17 @@ int main()
     ledDigitInit();
 	keyInit();
 	delayInit();
+	TIM3Init(999, 7999); // ∫√œÒ «8MHz
 
-	GPIO_SetBits(GPIOA, GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7);
+	// GPIO_SetBits(GPIOA, GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7);
 	
     while(1)
     {	
-		int8_t d;
-		for (d = 0; d < 10; d ++) {
-			displayDigit(d, 0);
-			delayMsec(500);
-		}
+//		int8_t d;
+//		for (d = 0; d < 10; d ++) {
+//			displayDigit(d, 0);
+//			delayMsec(500);
+//		}
 		
 		
 //		

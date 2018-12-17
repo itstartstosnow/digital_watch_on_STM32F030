@@ -541,6 +541,11 @@
               <FileType>1</FileType>
               <FilePath>.\src\ledDigit.c</FilePath>
             </File>
+            <File>
+              <FileName>timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\timer.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

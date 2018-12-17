@@ -4,6 +4,6 @@
 
 
 void displayDigit(int8_t digit, int8_t decimalPoint);
-void ledDigitInit ();
+void ledDigitInit (void);
 
 #endif
