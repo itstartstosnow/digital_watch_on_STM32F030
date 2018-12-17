@@ -3,18 +3,17 @@
 # include "ledDigit.h"
 
 int8_t currentDigit = 0;
-int8_t displayedDigits[4] = {1, 2, 3, 4}; // left -> right
-int8_t displayedDecimalPoints[4] = {0, 0, 1, 1}; // left -> right
+extern int8_t displayedDigits[4];                                  // from main.c
+extern int8_t displayedDecimalPoints[4];                           // from main.c
 
 void TIM3Init(uint32_t period, uint16_t prescaler)
 {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 
-	//时钟使能
+	// Enable clock
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE); 
 	
-	//定时器TIM初始化
 	TIM_TimeBaseStructure.TIM_Period = period;                      //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
 	TIM_TimeBaseStructure.TIM_Prescaler = prescaler;                //设置用来作为TIM时钟频率除数的预分频值
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;         //设置时钟分割:TDTS = Tck_tim
@@ -23,16 +22,15 @@ void TIM3Init(uint32_t period, uint16_t prescaler)
 	
 	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);                      //使能指定的TIM中断,允许更新中断
 
-	//中断优先级NVIC设置
 	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn; 
 	NVIC_InitStructure.NVIC_IRQChannelPriority = 0;                  //优先级0级
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;                  //IRQ通道被使能
 	NVIC_Init(&NVIC_InitStructure);                                  //初始化NVIC寄存器
 
-	TIM_Cmd(TIM3, ENABLE);  //使能TIM					 
+	TIM_Cmd(TIM3, ENABLE);  // Enable TIM					 
 }
 
-void TIM3_IRQHandler(void)   //TIM中断
+void TIM3_IRQHandler(void)   // TIM interrupt
 {
 	if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)  //检查TIM更新中断发生与否
 	{

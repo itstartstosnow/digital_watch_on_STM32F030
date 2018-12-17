@@ -15,10 +15,10 @@ void keyInit (void)
 int8_t keyScan (void) {
 	int8_t pressed = 0;
 	int8_t i;
-	for (i = 10; i > 0; i --) {
+	for (i = 5; i > 0; i --) {
 		if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9) == 0) pressed |= 1;         // sw1
 		if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_10) == 0) pressed |= (1 << 1); // sw2
-		delayMsec(10);
+		delayMsec(5);
 	}	
 	return pressed;
 }

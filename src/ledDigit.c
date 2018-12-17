@@ -2,7 +2,7 @@
 # include "ledDigit.h"
 # include "delay.h"
 
-int8_t displayDigits[10]={ // PGFEDCBA 的顺序，高电平亮
+int8_t displayDigits[10]={ // written in the order of "PGFEDCBA", 1 = on, 0 = off
 	0b00111111,
     0b00000110,
     0b01011011,
@@ -16,18 +16,18 @@ int8_t displayDigits[10]={ // PGFEDCBA 的顺序，高电平亮
 }; // 0-9
 
 void displayDigit(int8_t digit, int8_t decimalPoint){
-	int8_t displayDigit, i;
-	displayDigit = displayDigits[digit];
-	if (decimalPoint) displayDigit |= 0x80; // 显示小数点
+	int8_t display, i;
+	display = displayDigits[digit];
+	if (decimalPoint) display |= 0x80; // display the decimal points
 	
 	for(i = 0; i < 8; i ++) {
 		// A1 = DDA = 14 = SI = data, serial input signal
-		if (displayDigit & 0x80) {
+		if (display & 0x80) {
 			GPIO_SetBits(GPIOA, GPIO_Pin_1); 
 		} else {
 			GPIO_ResetBits(GPIOA, GPIO_Pin_1); 
 		}
-		displayDigit = displayDigit << 1; 
+		display = display << 1; 
 		
 		// A3 = DCK = 11 = SCK = CLK, 0 --> 1, save one digit to S.R.
 		GPIO_ResetBits(GPIOA, GPIO_Pin_3);
