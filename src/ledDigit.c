@@ -2,7 +2,7 @@
 # include "ledDigit.h"
 # include "delay.h"
 
-int8_t displayDigits[10]={ // written in the order of "PGFEDCBA", 1 = on, 0 = off
+int8_t displayDigits[11]={ // written in the order of "PGFEDCBA", 1 = on, 0 = off
 	0b00111111,
     0b00000110,
     0b01011011,
@@ -12,8 +12,9 @@ int8_t displayDigits[10]={ // written in the order of "PGFEDCBA", 1 = on, 0 = of
     0b01111101,
     0b00000111,
     0b01111111,
-    0b01101111
-}; // 0-9
+    0b01101111,
+	0b01000000
+}; // 0-9, 10 = '-'
 
 void displayDigit(int8_t digit, int8_t decimalPoint){
 	int8_t display, i;

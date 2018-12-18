@@ -34,50 +34,50 @@ void delaySec(uint32_t s){
 
 
 /* 
-// Removed on 11:48, 2018.12.14 Ê±¼ä×ÜÊÇÂýÈý±¶£¬²»ÖªµÀÎªÊ²Ã´
+// Removed on 11:48, 2018.12.14 æ—¶é—´æ€»æ˜¯æ…¢ä¸‰å€ï¼Œä¸çŸ¥é“ä¸ºä»€ä¹ˆ
 
 # include "stm32f0xx_conf.h"
 # include "delay.h"
 
-static int8_t  fac_us = 0;//usÑÓÊ±±¶³ËÊý
-static int16_t fac_ms = 0;//msÑÓÊ±±¶³ËÊý
+static int8_t  fac_us = 0;//uså»¶æ—¶å€ä¹˜æ•°
+static int16_t fac_ms = 0;//mså»¶æ—¶å€ä¹˜æ•°
 
-//SYSTICKµÄÊ±ÖÓ¹Ì¶¨ÎªHCLKÊ±ÖÓµÄ1/8
+//SYSTICKçš„æ—¶é’Ÿå›ºå®šä¸ºHCLKæ—¶é’Ÿçš„1/8
 void delay_init()	 
 {
-	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);	//Ñ¡ÔñÍâ²¿Ê±ÖÓ  HCLK/8
+	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);	//é€‰æ‹©å¤–éƒ¨æ—¶é’Ÿ  HCLK/8
 	fac_us = SystemCoreClock / 8;	// sysTick 48MHz
-	fac_ms = (int16_t)fac_us * 1000;//·ÇucosÏÂ,´ú±íÃ¿¸ömsÐèÒªµÄsystickÊ±ÖÓÊý   
+	fac_ms = (int16_t)fac_us * 1000;//éžucosä¸‹,ä»£è¡¨æ¯ä¸ªmséœ€è¦çš„systickæ—¶é’Ÿæ•°   
 }								    
 
 void delay_us(int16_t nus)
 {		
 	unsigned int temp = nus * fac_us;	    	 
-	SysTick->LOAD = temp - 1; //Ê±¼ä¼ÓÔØ	  		 
-	SysTick->VAL = 0x00;        //Çå¿Õ¼ÆÊýÆ÷
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk ;          //¿ªÊ¼µ¹Êý	 
+	SysTick->LOAD = temp - 1; //æ—¶é—´åŠ è½½	  		 
+	SysTick->VAL = 0x00;        //æ¸…ç©ºè®¡æ•°å™¨
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk ;          //å¼€å§‹å€’æ•°	 
 	do
 	{
 		temp = SysTick->CTRL;
 	}
 	while((temp & SysTick_CTRL_COUNTFLAG_Msk) != SysTick_CTRL_COUNTFLAG_Msk);
-	SysTick->CTRL &= ~ SysTick_CTRL_ENABLE_Msk;       //¹Ø±Õ¼ÆÊýÆ÷
-	SysTick->VAL = 0X00;       //Çå¿Õ¼ÆÊýÆ÷	 
+	SysTick->CTRL &= ~ SysTick_CTRL_ENABLE_Msk;       //å…³é—­è®¡æ•°å™¨
+	SysTick->VAL = 0X00;       //æ¸…ç©ºè®¡æ•°å™¨	 
 }
 
 void delay_ms(int16_t nms)
 {	 		  	  
 	int32_t temp = nms * fac_ms;		   
-	SysTick->LOAD = temp - 1;//Ê±¼ä¼ÓÔØ(SysTick->LOADÎª24bit)
-	SysTick->VAL = 0x00;           //Çå¿Õ¼ÆÊýÆ÷
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk ;          //¿ªÊ¼µ¹Êý  
+	SysTick->LOAD = temp - 1;//æ—¶é—´åŠ è½½(SysTick->LOADä¸º24bit)
+	SysTick->VAL = 0x00;           //æ¸…ç©ºè®¡æ•°å™¨
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk ;          //å¼€å§‹å€’æ•°  
 	do
 	{
 		temp = SysTick->CTRL;
 	}
 	while((temp & SysTick_CTRL_COUNTFLAG_Msk) != SysTick_CTRL_COUNTFLAG_Msk); 
-	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;       //¹Ø±Õ¼ÆÊýÆ÷
-	SysTick->VAL = 0X00;       //Çå¿Õ¼ÆÊýÆ÷	  	    
+	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;       //å…³é—­è®¡æ•°å™¨
+	SysTick->VAL = 0X00;       //æ¸…ç©ºè®¡æ•°å™¨	  	    
 } 
 */
 

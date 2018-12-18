@@ -3,7 +3,7 @@
 # include "stm32f0xx_conf.h"
 
 /*
-// Removed on 11:48, 2018.12.14 Ê±¼ä×ÜÊÇÂıÈı±¶£¬²»ÖªµÀÎªÊ²Ã´
+// Removed on 11:48, 2018.12.14 æ—¶é—´æ€»æ˜¯æ…¢ä¸‰å€ï¼Œä¸çŸ¥é“ä¸ºä»€ä¹ˆ
 void delay_init(void);
 void delay_ms(int16_t nms);
 void delay_us(int16_t nus);

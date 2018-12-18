@@ -2,11 +2,20 @@
 # include "timer.h"
 # include "ledDigit.h"
 
-int8_t currentDigit = 0;
+int8_t currentDigit = 0;                                           // currently displayed digit
+
+// only effective when flicker is on
+int8_t flickerState = 0;                                           // current state, 0 = off
+int8_t flickerCount = 0;                                           // count to control the flicker time
+int8_t flickerDuration;                                            // the duration of a on/off in a flicker
+
 extern int8_t displayedDigits[4];                                  // from main.c
 extern int8_t displayedDecimalPoints[4];                           // from main.c
+extern int8_t flicker[4];                                          // from main.c
 
-void TIM3Init(uint32_t period, uint16_t prescaler)
+// time between two interruption: t = (prescaler + 1) / 8MHz * (period + 1)
+// on and off time when flicker: t * flickerDurationParam
+void TIM3Init(uint32_t period, uint16_t prescaler, int8_t flickerDurationParam)
 {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
@@ -14,29 +23,34 @@ void TIM3Init(uint32_t period, uint16_t prescaler)
 	// Enable clock
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE); 
 	
-	TIM_TimeBaseStructure.TIM_Period = period;                      //ÉèÖÃÔÚÏÂÒ»¸ö¸üÐÂÊÂ¼þ×°Èë»î¶¯µÄ×Ô¶¯ÖØ×°ÔØ¼Ä´æÆ÷ÖÜÆÚµÄÖµ	
-	TIM_TimeBaseStructure.TIM_Prescaler = prescaler;                //ÉèÖÃÓÃÀ´×÷ÎªTIMÊ±ÖÓÆµÂÊ³ýÊýµÄÔ¤·ÖÆµÖµ
-	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;         //ÉèÖÃÊ±ÖÓ·Ö¸î:TDTS = Tck_tim
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;     //TIMÏòÉÏ¼ÆÊýÄ£Ê½
-	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);                 //¸ù¾ÝÖ¸¶¨µÄ²ÎÊý³õÊ¼»¯TIMµÄÊ±¼ä»ùÊýµ¥Î»
+	TIM_TimeBaseStructure.TIM_Period = period;                      //è®¾ç½®åœ¨ä¸‹ä¸€ä¸ªæ›´æ–°äº‹ä»¶è£…å…¥æ´»åŠ¨çš„è‡ªåŠ¨é‡è£…è½½å¯„å­˜å™¨å‘¨æœŸçš„å€¼	
+	TIM_TimeBaseStructure.TIM_Prescaler = prescaler;                //è®¾ç½®ç”¨æ¥ä½œä¸ºTIMæ—¶é’Ÿé¢‘çŽ‡é™¤æ•°çš„é¢„åˆ†é¢‘å€¼
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;         //è®¾ç½®æ—¶é’Ÿåˆ†å‰²:TDTS = Tck_tim
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;     //TIMå‘ä¸Šè®¡æ•°æ¨¡å¼
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);                 //æ ¹æ®æŒ‡å®šçš„å‚æ•°åˆå§‹åŒ–TIMçš„æ—¶é—´åŸºæ•°å•ä½
 	
-	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);                      //Ê¹ÄÜÖ¸¶¨µÄTIMÖÐ¶Ï,ÔÊÐí¸üÐÂÖÐ¶Ï
+	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);                      //ä½¿èƒ½æŒ‡å®šçš„TIMä¸­æ–­,å…è®¸æ›´æ–°ä¸­æ–­
 
 	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn; 
-	NVIC_InitStructure.NVIC_IRQChannelPriority = 0;                  //ÓÅÏÈ¼¶0¼¶
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;                  //IRQÍ¨µÀ±»Ê¹ÄÜ
-	NVIC_Init(&NVIC_InitStructure);                                  //³õÊ¼»¯NVIC¼Ä´æÆ÷
+	NVIC_InitStructure.NVIC_IRQChannelPriority = 0;                  //ä¼˜å…ˆçº§0çº§
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;                  //IRQé€šé“è¢«ä½¿èƒ½
+	NVIC_Init(&NVIC_InitStructure);                                  //åˆå§‹åŒ–NVICå¯„å­˜å™¨
 
-	TIM_Cmd(TIM3, ENABLE);  // Enable TIM					 
+	TIM_Cmd(TIM3, ENABLE);  // Enable TIM
+
+	flickerDuration = flickerDurationParam;
 }
 
-void TIM3_IRQHandler(void)   // TIM interrupt
+// TIM interrupt
+// display a digit
+void TIM3_IRQHandler(void)   
 {
-	if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)  //¼ì²éTIM¸üÐÂÖÐ¶Ï·¢ÉúÓë·ñ
+	if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)  //æ£€æŸ¥TIMæ›´æ–°ä¸­æ–­å‘ç”Ÿä¸Žå¦
 	{
-		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);  //Çå³ýTIM¸üÐÂÖÐ¶Ï±êÖ¾ 
+		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);  //æ¸…é™¤TIMæ›´æ–°ä¸­æ–­æ ‡å¿— 
 		
 		currentDigit = (currentDigit + 1) % 4; // 0, 1, 2, 3, left --> right
+		
 		switch(currentDigit){
 			case 3: { // LD1, the right digit
 				GPIO_SetBits(GPIOA, GPIO_Pin_5);
@@ -59,6 +73,18 @@ void TIM3_IRQHandler(void)   // TIM interrupt
 				break;
 			}
 		}
+		// if it is flickering, and now it is in the "off" phase, shut it down
+		if (flicker[currentDigit] && flickerState == 0) { 
+			GPIO_ResetBits(GPIOA, GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7);
+		}
+		
 		displayDigit(displayedDigits[currentDigit], displayedDecimalPoints[currentDigit]);
+	
+		flickerCount ++;
+		if (flickerCount >= flickerDuration) {
+			flickerCount = 0;
+			flickerState = ~flickerState;
+		}
 	}
 }
+

@@ -4,21 +4,22 @@
 
 void keyInit (void)
 { 
-	// SW1 --> PA9, SW2 --> PA10  之前的板子用的上拉输入？
+	// SW1 --> PA9, SW2 --> PA10  涔嬪墠鐨勬澘瀛愮敤鐨勪笂鎷夎緭鍏ワ紵
  	GPIO_InitTypeDef GPIO_InitStructure;
  	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
 	GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_9 | GPIO_Pin_10;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN; // ??
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; // 杩欏氨鏄笂鎷夛紵
  	GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
 int8_t keyScan (void) {
 	int8_t pressed = 0;
 	int8_t i;
-	for (i = 5; i > 0; i --) {
+	for (i = 100; i > 0; i --) {
 		if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9) == 0) pressed |= 1;         // sw1
 		if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_10) == 0) pressed |= (1 << 1); // sw2
-		delayMsec(5);
+		delayMsec(10);
 	}	
 	return pressed;
 }
