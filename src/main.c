@@ -5,18 +5,20 @@
 # include "timer.h"
 # include "string.h"
 	
-// the displayed variables, externed to timer.c for display
+// global variables
 int8_t displayedDigits[4] = {1, 2, 3, 4};         // left -> right
 int8_t displayedDecimalPoints[4] = {0, 0, 1, 1};  // left -> right
 int8_t flicker[4] = {0, 0, 0, 0};                 // whether or not flicker
 
-// current date and time
 int yyyy = 2018;
 int mm = 12;
 int dd = 21;
 int HH = 13;
 int MM = 15;
 int SS = 00;
+
+int8_t daysInMonth[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+int8_t daysInMonthAtLeapYear[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 // declaration of some functions
 void displayyyyy(void);
@@ -26,8 +28,10 @@ void displaySS(void);
 // void displayTimer(void); // Todo
 
 void switchMenuItem(int8_t *);
+void updateCurrentDisplay(int8_t);
 void enterSettingMode(int8_t);
 
+void setFlickeringItem(int8_t);
 void setyyyy(void);
 void setmmdd(void);
 void setHHMM(void);
@@ -55,6 +59,7 @@ int main()
 	keyInit();
 	delayInit();
 	TIM3Init(49, 799, 50);   // interrupt every 5ms, and on / off each last 250 ms
+	TIM14Init(9999, 799);// interrupt every 1s
 	
     while(1)
     {	
@@ -72,14 +77,13 @@ int main()
 			}
 		}else{
 			delayMsec(50);
+			updateCurrentDisplay(menuItem); // refresh here instead of in TIM14_IRQHandler()
 		}	
-		
     }
 }
 
-void switchMenuItem(int8_t* menuItemPtr){
-	*menuItemPtr = ((*menuItemPtr) + 1) % 5;
-	switch(*menuItemPtr){
+void updateCurrentDisplay(int8_t menuItem){
+	switch(menuItem){
 		case 0: {
 			displayyyyy();
 			break;
@@ -108,6 +112,11 @@ void switchMenuItem(int8_t* menuItemPtr){
 			break;
 		}
 	}
+}
+
+void switchMenuItem(int8_t* menuItemPtr){
+	*menuItemPtr = ((*menuItemPtr) + 1) % 5;
+	updateCurrentDisplay(*menuItemPtr);
 }
 
 void enterSettingMode(int8_t menuItem){
@@ -187,7 +196,7 @@ void setyyyy(){
 		keyPressed = keyScan();
 		if (keyPressed == 1) { // SW1
 			yyyy ++;
-			if (yyyy >= 2070) yyyy = 1970; // the range of year is 1970 - 2070
+			if (yyyy >= 2070) yyyy = 1970; // the range of year is 1970 - 2069
 			displayyyyy();
 		} else if (keyPressed == 3) { // SW1 + SW2, exit the setting mode
 			break;
@@ -199,13 +208,101 @@ void setyyyy(){
 	memset(flicker, 0, 4);
 	return;
 }
+
+// applys to mmdd and HHMM
+void setFlickeringItem(int8_t item) {
+	if (item == 0) {
+		flicker[0] = 1;
+		flicker[1] = 1;
+		flicker[2] = 0;
+		flicker[3] = 0;
+	} else {
+		flicker[0] = 0;
+		flicker[1] = 0;
+		flicker[2] = 1;
+		flicker[3] = 1;
+	}
+}
+
 void setmmdd(){
+	int8_t settingItem = 0;          // the item being set, 0 = mm, 1 = dd
+	int8_t keyPressed = 0;
+	setFlickeringItem(settingItem);
+	
+	while (1) {
+		keyPressed = keyScan();
+		if (keyPressed == 1) {       // SW1
+			if (settingItem == 0) {  // setting mm
+				mm ++;
+				if (mm > 12) mm = 1; // the range of month is 1 - 12
+			} else {                 // setting dd
+				dd ++;
+				if (dd > ((isLeapYear(yyyy))? daysInMonthAtLeapYear[mm]: daysInMonth[mm])) {
+					dd = 1;
+				}
+			}
+			displaymmdd();
+		} else if (keyPressed == 2) { // SW2
+			settingItem = ~settingItem;
+			setFlickeringItem(settingItem);
+		} else if (keyPressed == 3) { // SW1 + SW2, exit the setting mode
+			break;
+		} else {
+			delayMsec(50);
+		}
+	}
+		
+	memset(flicker, 0, 4);
 	return;
 }
 void setHHMM(){
+	int8_t settingItem = 0;          // the item being set, 0 = HH, 1 = MM
+	int8_t keyPressed = 0;
+	setFlickeringItem(settingItem);
+	
+	while (1) {
+		keyPressed = keyScan();
+		if (keyPressed == 1) {       // SW1
+			if (settingItem == 0) {  // setting HH
+				HH = (HH + 1) % 24;  // the range of hour is 0 - 23
+			} else {                 // setting MM
+				MM = (MM + 1) % 60;  // the range of hour is 0 - 59
+			}
+			displayHHMM();
+		} else if (keyPressed == 2) { // SW2
+			settingItem = ~settingItem;
+			setFlickeringItem(settingItem);
+		} else if (keyPressed == 3) { // SW1 + SW2, exit the setting mode
+			break;
+		} else {
+			delayMsec(50);
+		}
+	}
+		
+	memset(flicker, 0, 4);
 	return;
 }
 void setSS(){
+	int8_t keyPressed = 0;
+	flicker[0] = 0;
+	flicker[1] = 0;
+	flicker[2] = 1;
+	flicker[3] = 1;
+	
+	while (1) {
+		keyPressed = keyScan();
+		if (keyPressed == 1) { // SW1
+			SS ++;
+			if (SS >= 60) SS = 0; // the range of second is 0 - 59
+			displaySS();
+		} else if (keyPressed == 3) { // SW1 + SW2, exit the setting mode
+			break;
+		} else {
+			delayMsec(50);
+		}
+	}
+	
+	memset(flicker, 0, 4);
 	return;
 }
 void runAsTimer(){
