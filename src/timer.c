@@ -21,6 +21,7 @@ extern int MM;
 extern int SS;
 extern int8_t daysInMonth[13];
 extern int8_t daysInMonthAtLeapYear[13];
+extern int timerMSec;
 
 int8_t isLeapYear(int year) {
 	if (year % 400 == 0 || ((year % 4) == 0 && (year % 100) != 0)){
@@ -49,7 +50,7 @@ void TIM3Init(uint32_t period, uint16_t prescaler, int8_t flickerDurationParam)
 	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);                      //使能指定的TIM中断,允许更新中断
 
 	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn; 
-	NVIC_InitStructure.NVIC_IRQChannelPriority = 0;                  //优先级0级
+	NVIC_InitStructure.NVIC_IRQChannelPriority = 1;                  //优先级
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;                  //IRQ通道被使能
 	NVIC_Init(&NVIC_InitStructure);                                  //初始化NVIC寄存器
 
@@ -106,7 +107,7 @@ void TIM3_IRQHandler(void)
 }
 
 // except for TIM1(advanced) and TIM3, TIM14, 16, 17 are also available on the board
-// use TIM14 to generate 1s ticks and update the time
+// TIM14 generate 1s ticks and update the system time
 void TIM14Init(uint32_t period, uint16_t prescaler)
 {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
@@ -159,6 +160,41 @@ void TIM14_IRQHandler(void)
 				}
 			}
 		}
+	}
+}
+
+// TIM16 generate 1ms ticks, to be used in the timer mode
+// note that TIM16 = 40 kHz, not 8MHz (really didn't know that before)
+void TIM16Init(uint32_t period, uint16_t prescaler)
+{
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	// Enable clock
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM16, ENABLE); 
+	
+	TIM_TimeBaseStructure.TIM_Period = period;                      //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+	TIM_TimeBaseStructure.TIM_Prescaler = prescaler;                //设置用来作为TIM时钟频率除数的预分频值
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;         //设置时钟分割:TDTS = Tck_tim
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;     //TIM向上计数模式
+	TIM_TimeBaseInit(TIM16, &TIM_TimeBaseStructure);                 //根据指定的参数初始化TIM的时间基数单位
+	
+	TIM_ITConfig(TIM16, TIM_IT_Update, ENABLE);                      //使能指定的TIM中断,允许更新中断
+
+	NVIC_InitStructure.NVIC_IRQChannel = TIM16_IRQn; 
+	NVIC_InitStructure.NVIC_IRQChannelPriority = 2;                  //优先级
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;                  //IRQ通道被使能
+	NVIC_Init(&NVIC_InitStructure);                                  //初始化NVIC寄存器
+
+	// TIM_Cmd(TIM16, ENABLE);  // Enable TIM
+}
+
+void TIM16_IRQHandler(void)   
+{
+	if (TIM_GetITStatus(TIM16, TIM_IT_Update) != RESET)  //检查TIM更新中断发生与否
+	{
+		TIM_ClearITPendingBit(TIM16, TIM_IT_Update);  //清除TIM更新中断标志 
+		timerMSec = (timerMSec + 1) % 10000;          // range of millisec: 0 - 9999
 	}
 }
 
